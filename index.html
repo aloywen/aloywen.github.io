@@ -46,7 +46,7 @@
                     <!-- Modal body -->
                     <div class="modal-body">
                         <form>
-                            <input type="hidden" class="form-control" id="idProduk">
+                            <input type="hidden" class="form-control" id="id">
                             <div class="mb-3">
                                 <label for="recipient-name" class="col-form-label">Nama</label>
                                 <input type="text" class="form-control" id="nama" required>
@@ -84,7 +84,7 @@
         <script>
             
             $(document).ready(function (){
-                const url = "https://script.google.com/macros/s/AKfycbybkVoCy_e9IRMaS2HOghgN7T7udDCOg4t02RYP9kFoRVY0qe3V_BwdDnGuQiEaD9lV/exec"
+                const url = "https://script.google.com/macros/s/AKfycbwrwiRQkSnuFWbZyReZ2a4CVa1nr0KJGtsrbHCrBo1LKwRE2PsGD7ajnaGoyinlIpmF/exec"
 
                 const table = $("#example").DataTable({
                     ajax: url+"?action=get-data",
@@ -108,12 +108,30 @@
                             defaultContent: '<button class="btn btn-warning" id="edit"> Edit </button>'
                         },
                     ],
+                    // columnDefs: [{
+                    //     "targets": [0],
+                    //     "orderable": true,
+                    //     "width": 4
+                    // }],
                     rowId: "id",
                     liveAjax: true,
-                    response: true
+                    response: true,
+                    responsive: true
+
+                    // ajax: {
+                    //     "url": `${url}?action=get-data`,
+                    // },
+            
+            
+                    // columnDefs: [{
+                        
+                    //         targets: 3,
+                    //         render: $.fn.dataTable.render.number(',', '.', 0, '')   
+                    // }],
                 })
                 
                 $("#tambahProduk").on('click', function() {
+                    clear()
                     $('#myModal').modal('show')
                 })
                 
@@ -123,17 +141,53 @@
                     console.log(data)
 
                     let tgl = data.tanggal
+                    // let tanggal = formatDate(tgl)
+                    let nominal = data.nominal
+                    let nomi = nominal.toLocaleString('id-ID')
 
                     $('#id').val(data.id)
                     $('#nama').val(data.nama)
-                    $('#nominal').val(data.nominal)
-                    $('#tanggal').val(new Date(tgl))
+                    $('#nominal').val(nomi)
+                    $('#tanggal').val(tgl)
                     $('#myModal').modal('show')
-                    $('myModal .modal-title').text('Edit Data Nih Ayaang')
+                    $('#myModal .modal-title').text('Edit Data Nih Ayaang')
                 })
 
+                $('.modal-footer .btn-success').on('click', () => {
+                    const id = $('#id').val()
+                    const nama = $('#nama').val()
+                    const nominal = $('#nominal').val()
+                    const tgl = $('#tanggal').val()
 
+                    if(nama == '' || nominal == '' || tgl == ''){
+                        alert('jgn kosong ayaang')
+                        return
+                    }
+
+                    let apiUrl = ''
+
+                    if(id){ 
+                        apiUrl = `${url}?action=update&nama=${nama}&nominal=${nominal}&tanggal=${tgl}&id${id}`
+                    } else {
+                        apiUrl = `${url}?action=insert&nama=${nama}&nominal=${nominal}&tanggal=${tgl}`
+                    }
+
+                    $.getJSON(apiUrl, function(result){
+                        alert(result.message)
+                        location.reload()
+                    })
+
+                })
+                
+                
             })
+
+            function clear(){
+                $('#id').val('')
+                $('#nama').val('')
+                $('#nominal').val('')
+                $('#tanggal').val('')
+            }
         </script>
     </body>
 </html>
