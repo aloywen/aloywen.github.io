@@ -49,15 +49,15 @@
                             <input type="hidden" class="form-control" id="id">
                             <div class="mb-3">
                                 <label for="recipient-name" class="col-form-label">Nama</label>
-                                <input type="text" class="form-control" id="nama" required>
+                                <input type="text" class="form-control" id="nama" required autocomplete="false">
                             </div>
                             <div class="mb-3">
                                 <label for="recipient-name" class="col-form-label">Nominal</label>
-                                <input type="text" class="form-control" id="nominal" required>
+                                <input type="text" class="form-control" id="nominal" required autocomplete="false">
                             </div>
                             <div class="mb-3">
-                            <label for="recipient-name" class="col-form-label">Tanggal</label>
-                            <input type="date" class="form-control" id="tanggal" required>
+                                <label for="recipient-name" class="col-form-label">Tanggal</label>
+                                <input type="date" class="form-control" id="tanggal" required autocomplete="false">
                             </div>
                             
                         </form>
@@ -80,11 +80,13 @@
         <script src="https://cdn.datatables.net/fixedheader/3.3.1/js/dataTables.fixedHeader.min.js"></script>
         <script src="https://cdn.datatables.net/responsive/2.4.0/js/dataTables.responsive.min.js"></script>
         <script src="https://cdn.datatables.net/responsive/2.4.0/js/responsive.bootstrap.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment.min.js"></script>
+        
 
         <script>
             
             $(document).ready(function (){
-                const url = "https://script.google.com/macros/s/AKfycbwrwiRQkSnuFWbZyReZ2a4CVa1nr0KJGtsrbHCrBo1LKwRE2PsGD7ajnaGoyinlIpmF/exec"
+                const url = "https://script.google.com/macros/s/AKfycbxw9erh5iBB47YaZr5L031wjPro-Mgy7f_dy_35guVfwH39k0xG_KV086yYpzsRk1s/exec"
 
                 const table = $("#example").DataTable({
                     ajax: url+"?action=get-data",
@@ -95,17 +97,26 @@
                         },
                         {
                             title: "Nominal",
-                            data: `nominal`.toLocaleString('id-ID')
+                            data: `nominal`,
+                            render: $.fn.dataTable.render.number( '.', ',', 0, )
                         },
                         {
                             title: "Tanggal",
-                            data: "tanggal"
+                            data: "tanggal",
+                            // render: $.fn.dataTable.render.moment('DD/MM/YYYY')
+                            // render: $.fn.dataTable.render.moment('YYYY-MM-DDTHH:mm:ss.SSSSZ','YYYY/MM/DD' )
                         },
                         {
                             title: "",
                             targets: -1,
                             data: null,
                             defaultContent: '<button class="btn btn-warning" id="edit"> Edit </button>'
+                        },
+                        {
+                            title: "",
+                            targets: -1,
+                            data: null,
+                            defaultContent: '<button class="btn btn-danger" id="delete"> Hapus </button>'
                         },
                     ],
                     // columnDefs: [{
@@ -134,16 +145,41 @@
                     clear()
                     $('#myModal').modal('show')
                 })
+
+                $('#example tbody').on('click', '#delete', function() {
+                    const data = table.row($(this).parents('tr')).data()
+                    // console.log(data)
+
+                    const id = data.id
+
+                    let apiUrl = ''
+
+                    
+                    // alert('yakin dihapus nih ayaang?')
+                    
+                    if(id){apiUrl = `${url}?action=delete&id=${id}`
+                    console.log(id)}
+
+                    $.getJSON(apiUrl, function(result){
+                        // console.log(result)
+                        // alert(result.message)
+                        alert('Udah di hapus yaa :P')
+                        location.reload()
+                    })
+                    
+                })
                 
                 
                 $('#example tbody').on('click', '#edit', function() {
                     const data = table.row($(this).parents('tr')).data()
-                    console.log(data)
+                    console.log(data.id)
 
-                    let tgl = data.tanggal
-                    // let tanggal = formatDate(tgl)
+                    let tgl = new Date(data.tanggal)
+                    let tanggal = tgl.toLocaleDateString()
                     let nominal = data.nominal
                     let nomi = nominal.toLocaleString('id-ID')
+
+                    console.log(tanggal)
 
                     $('#id').val(data.id)
                     $('#nama').val(data.nama)
@@ -154,30 +190,48 @@
                 })
 
                 $('.modal-footer .btn-success').on('click', () => {
-                    const id = $('#id').val()
+                    const tempid = $('#id').val()
                     const nama = $('#nama').val()
-                    const nominal = $('#nominal').val()
+                    const nom = $('#nominal').val()
                     const tgl = $('#tanggal').val()
+                    
+                    const id = Number.parseInt(tempid)
+                    console.log(id)
 
-                    if(nama == '' || nominal == '' || tgl == ''){
-                        alert('jgn kosong ayaang')
+                    let tanggal = new Date(tgl)
+                    let tanggalID = tanggal.toLocaleDateString()
+
+                    const nominal = nom.replace(".", "")
+
+                    if(nama == '' || nominal == '' || tanggal == ''){
+                        alert('jgn ada kosong ayaang')
                         return
                     }
 
                     let apiUrl = ''
 
                     if(id){ 
-                        apiUrl = `${url}?action=update&nama=${nama}&nominal=${nominal}&tanggal=${tgl}&id${id}`
+                        apiUrl = `${url}?action=update&nama=${nama}&nominal=${nominal}&tanggal=${tanggalID}&id=${id}`
+                        // location.reload()
+                        $.getJSON(apiUrl, function(result){
+                            alert('Yeaay, berhasil update data :D')
+                            // console.log(result)
+                            location.reload()
+                        })
                     } else {
-                        apiUrl = `${url}?action=insert&nama=${nama}&nominal=${nominal}&tanggal=${tgl}`
+                        apiUrl = `${url}?action=insert&nama=${nama}&nominal=${nominal}&tanggal=${tanggalID}`
+                        // console.log(apiUrl)
+                        $.getJSON(apiUrl, function(result){
+                                // console.log(result)
+                                alert('Yeaay, semangat ayaang :D')
+                                location.reload()
+                            })
                     }
-
-                    $.getJSON(apiUrl, function(result){
-                        alert(result.message)
-                        location.reload()
-                    })
-
+                    
+                    
                 })
+                
+                
                 
                 
             })
